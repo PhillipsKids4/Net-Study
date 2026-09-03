@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Net+ Gym Cards</title>
+<style>
+  :root{
+    --bg:#0D141F; --panel:#16202E; --panel-2:#1C2938;
+    --ink:#E8EEF6; --muted:#8FA1B8;
+    --green:#43D97B; --amber:#FFB454; --red:#FF5D52;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;flex-direction:column; overscroll-behavior:none;
+    user-select:none;-webkit-user-select:none;
+    max-width:640px;margin:0 auto;width:100%;
+  }
+  header{padding:14px 18px 10px;display:flex;align-items:baseline;justify-content:space-between}
+  header h1{font-size:17px;font-weight:800;letter-spacing:-.02em}
+  header h1 span{color:var(--amber)}
+  #streakbox{font-size:13px;color:var(--muted);font-weight:600}
+  #streakbox b{color:var(--green)}
+  #hdrmeta{display:flex;align-items:center;gap:10px}
+  #sync{font-size:11px;font-weight:800;letter-spacing:.04em;padding:3px 9px;border-radius:12px}
+  #sync.ok{background:rgba(67,217,123,.15);color:var(--green)}
+  #sync.off{background:rgba(255,180,84,.15);color:var(--amber)}
+  #sync.unlinked,#sync.syncing{background:rgba(143,161,184,.15);color:var(--muted)}
+  #linkbox{background:var(--panel);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid #2A394C}
+  .lb-t{font-size:15px;font-weight:800;margin-bottom:6px}
+  .lb-s{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:12px}
+  #tok{width:100%;background:var(--bg);border:2px solid #2A394C;border-radius:11px;padding:12px;color:var(--ink);font-size:15px;font-family:inherit;margin-bottom:10px;outline:none;user-select:text;-webkit-user-select:text}
+  #tok:focus{border-color:var(--amber)}
+  #linkbtn{width:100%;border:none;border-radius:12px;padding:14px;background:var(--amber);color:#0D141F;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer}
+  #linkmsg{font-size:12.5px;color:var(--amber);margin-top:10px;min-height:1em}
+  #resetline button{margin:0 8px}
+
+  #home{flex:1;overflow-y:auto;padding:6px 18px 24px}
+  .lead{color:var(--muted);font-size:14px;line-height:1.45;margin-bottom:16px}
+  .dh{font-size:12px;font-weight:800;color:var(--muted);margin:18px 2px 8px;letter-spacing:.02em}
+  .deck{
+    width:100%;text-align:left;background:var(--panel);border:none;border-radius:14px;
+    padding:15px 16px;margin-bottom:10px;color:var(--ink);
+    display:flex;align-items:center;gap:13px;cursor:pointer;font-family:inherit;
+  }
+  .deck:active{background:var(--panel-2)}
+  .jack{width:10px;height:38px;border-radius:4px;flex:none}
+  .deck .t{font-size:16px;font-weight:700}
+  .deck .s{font-size:12.5px;color:var(--muted);margin-top:2px;display:block}
+  .deck .n{margin-left:auto;font-size:13px;font-weight:700;color:var(--muted);flex:none;padding-left:8px}
+  .deck.special{background:linear-gradient(135deg,#232f1f,#16202E)}
+  .deck.special .t{color:var(--green)}
+  #resetline{margin-top:18px;text-align:center}
+  #resetline button{background:none;border:none;color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:inherit}
+
+  #session{flex:1;display:none;flex-direction:column;padding:0 18px 18px;min-height:0}
+  #topbar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  #quit{background:none;border:none;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;padding:6px 6px 6px 0;font-family:inherit}
+  #bar{flex:1;height:6px;background:var(--panel);border-radius:3px;overflow:hidden}
+  #barfill{height:100%;width:0%;background:var(--amber);border-radius:3px;transition:width .25s ease}
+  #count{font-size:13px;color:var(--muted);font-weight:700;min-width:52px;text-align:right}
+
+  #cardwrap{flex:1;perspective:1200px;display:flex;min-height:0}
+  #card{flex:1;position:relative;transform-style:preserve-3d;transition:transform .3s cubic-bezier(.2,.8,.3,1.1)}
+  #card.flipped{transform:rotateX(180deg)}
+  .face{
+    position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:var(--panel);border-radius:18px;display:flex;flex-direction:column;padding:16px;
+  }
+  .face.back{transform:rotateX(180deg);background:var(--panel-2)}
+  .meta{display:flex;align-items:center;gap:10px}
+  .chip{font-size:11.5px;font-weight:800;letter-spacing:.04em;padding:4px 10px;border-radius:20px;color:#0D141F}
+  .lvl{margin-left:auto;display:flex;align-items:center;gap:5px}
+  .lvl .pip{width:8px;height:8px;border-radius:50%;background:#2A394C}
+  .lvl .pip.on{background:var(--amber)}
+  .lvl .lbl{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.03em;margin-left:3px}
+  .qa{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 4px;overflow-y:auto;min-height:0}
+  .front .qa{font-size:clamp(18px,5vw,25px);font-weight:750;line-height:1.3;letter-spacing:-.01em}
+  .front.mc .qa{flex:none;padding:14px 4px 10px;align-items:flex-start}
+  .back .qa{font-size:clamp(16px,4.6vw,21px);font-weight:600;line-height:1.45;color:var(--ink);white-space:pre-line}
+  .back .qa .big{font-size:clamp(30px,9vw,46px);font-weight:850;letter-spacing:-.02em;display:block;margin-bottom:6px}
+  .hint{text-align:center;font-size:12.5px;color:var(--muted);font-weight:600}
+
+  #opts{display:none;flex-direction:column;gap:9px;overflow-y:auto;padding-bottom:4px;flex:1;min-height:0}
+  .opt{
+    border:2px solid #2A394C;background:var(--bg);border-radius:13px;padding:13px 14px;color:var(--ink);
+    font-size:14.5px;font-weight:650;text-align:left;cursor:pointer;line-height:1.35;font-family:inherit;
+    transition:border-color .12s,background .12s;
+  }
+  .opt:active{background:var(--panel-2)}
+  .opt.right{border-color:var(--green);background:rgba(67,217,123,.12)}
+  .opt.wrong{border-color:var(--red);background:rgba(255,93,82,.12)}
+  .opt:disabled{opacity:1}
+
+  #answers{display:flex;gap:12px;margin-top:14px;visibility:hidden}
+  #answers button{flex:1;border:none;border-radius:16px;padding:20px 0;font-size:17px;font-weight:800;cursor:pointer;color:#0D141F;font-family:inherit}
+  #missed{background:var(--red)}
+  #gotit{background:var(--green)}
+  #answers button:active{filter:brightness(1.12)}
+
+  #toast{
+    position:fixed;left:50%;top:14%;transform:translateX(-50%) scale(.9);
+    background:var(--amber);color:#0D141F;font-weight:850;font-size:15px;
+    padding:10px 20px;border-radius:24px;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;z-index:50;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) scale(1)}
+
+  #done{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+  #done h2{font-size:26px;font-weight:850;margin-bottom:8px}
+  #done .score{font-size:56px;font-weight:850;color:var(--green);letter-spacing:-.03em}
+  #done p{color:var(--muted);font-size:14.5px;margin:10px 0 26px;line-height:1.5}
+  #done .actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+  #done button{border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+  #again{background:var(--amber);color:#0D141F}
+  #drill{background:var(--panel-2);color:var(--red)}
+  #backhome{background:none;color:var(--muted);text-decoration:underline;font-weight:600;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Net+ <span>Gym Cards</span></h1>
+  <div id="hdrmeta"><span id="sync"></span><div id="streakbox"></div></div>
+</header>
+
+<div id="home">
+  <p class="lead">Full N10-009 coverage, grouped by exam domain with real blueprint weights. Every card climbs from easy multiple choice to full recall. Progress saves after every card and syncs through your GitHub account — same on your phone, iPad, and laptops.</p>
+  <div id="linkbox">
+    <div class="lb-t">Sync across devices</div>
+    <div class="lb-s">Paste a GitHub token that has only <b>Gists: read &amp; write</b>. It's stored on this device only; your progress lives in a secret Gist on your account. Same token on every device = same progress.</div>
+    <input id="tok" type="password" placeholder="github_pat_…" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="linkbtn">Link GitHub</button>
+    <div id="linkmsg"></div>
+  </div>
+  <div id="decks"></div>
+  <div id="resetline"><button id="resetbtn">Reset all progress</button><button id="unlinkbtn">Unlink GitHub</button></div>
+</div>
+
+<div id="session">
+  <div id="topbar">
+    <button id="quit">Exit</button>
+    <div id="bar"><div id="barfill"></div></div>
+    <div id="count"></div>
+  </div>
+  <div id="cardwrap">
+    <div id="card">
+      <div class="face front" id="frontFace">
+        <div class="meta"><span class="chip" id="chipF"></span><span class="lvl" id="lvlF"></span></div>
+        <div class="qa" id="qtext"></div>
+        <div id="opts"></div>
+        <div class="hint" id="hintF">tap to flip</div>
+      </div>
+      <div class="face back">
+        <div class="meta"><span class="chip" id="chipB"></span><span class="lvl" id="lvlB"></span></div>
+        <div class="qa" id="atext"></div>
+        <div class="hint">be honest — did you have it?</div>
+      </div>
+    </div>
+  </div>
+  <div id="answers">
+    <button id="missed">Missed it</button>
+    <button id="gotit">Got it</button>
+  </div>
+</div>
+
+<div id="done">
+  <h2 id="doneTitle">Set complete</h2>
+  <div class="score" id="scoreTxt"></div>
+  <p id="doneMsg"></p>
+  <div class="actions">
+    <button id="drill">Drill this set's misses</button>
+    <button id="again">Run it again</button>
+    <button id="backhome">Back to decks</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= CATEGORIES ================= */
+const CATS = {
+  osi:   {name:"OSI Model",            color:"#8AA6FF"},
+  ports: {name:"Ports & Protocols",    color:"#4FA3FF"},
+  ip:    {name:"IP & Subnetting",      color:"#5EE0D8"},
+  cloud: {name:"Cloud & Modern Nets",  color:"#7FD1AE"},
+  cable: {name:"Cabling & Fiber",      color:"#FFB454"},
+  ics:   {name:"Appliances & ICS",     color:"#FF9BE0"},
+  route: {name:"Routing & NAT",        color:"#FFD166"},
+  switch:{name:"Switching & VLANs",    color:"#F4A261"},
+  wifi:  {name:"Wireless",             color:"#B48CFF"},
+  svc:   {name:"DHCP, DNS & Time",     color:"#6EE7B7"},
+  ops:   {name:"Monitoring & Docs",    color:"#9DB2CE"},
+  dr:    {name:"Resilience & DR",      color:"#F2B8C6"},
+  sec:   {name:"Security & AAA",       color:"#FF6B5E"},
+  tshoot:{name:"Troubleshooting",      color:"#FF8093"},
+  cli:   {name:"CLI & Field Tools",    color:"#43D97B"},
+};
+const SECTIONS=[
+  {h:"Domain 1: Networking Concepts (23%)", decks:["osi","ports","ip","cloud","cable","ics"]},
+  {h:"Domain 2: Network Implementation (20%)", decks:["route","switch","wifi"]},
+  {h:"Domain 3: Network Operations (19%)", decks:["svc","ops","dr"]},
+  {h:"Domain 4: Network Security (14%)", decks:["sec"]},
+  {h:"Domain 5: Troubleshooting (24%)", decks:["tshoot","cli"]},
+];
+
+/* ================= CARDS ================= */
+/* a = answer; lines starting with # render big. s = optional short form for multiple-choice options */
+const CARDS = [
+/* ---------- OSI ---------- */
+{c:"osi",q:"Layer 1 — name & job",a:"#Physical\nBits on the wire — cables, connectors, hubs, transceivers"},
+{c:"osi",q:"Layer 2 — name & job",a:"#Data Link\nFrames & MAC addresses — switches live here"},
+{c:"osi",q:"Layer 3 — name & job",a:"#Network\nPackets & IP addresses — routers live here"},
+{c:"osi",q:"Layer 4 — name & job",a:"#Transport\nSegments — TCP/UDP, port numbers, flow control"},
+{c:"osi",q:"Layer 5 — name & job",a:"#Session\nOpens, manages, and tears down sessions between apps"},
+{c:"osi",q:"Layer 6 — name & job",a:"#Presentation\nFormatting — encryption, compression, character encoding"},
+{c:"osi",q:"Layer 7 — name & job",a:"#Application\nWhere network services meet apps — HTTP, DNS, SMTP"},
+{c:"osi",q:"PDU names, Layers 1 to 4",a:"Bits, Frames, Packets, Segments\n(Layers 5-7 just call it data)",s:"Bits, Frames, Packets, Segments"},
+{c:"osi",q:"Bottom-up OSI mnemonic",a:"Please Do Not Throw Sausage Pizza Away\nPhysical, Data Link, Network, Transport, Session, Presentation, Application",s:"Please Do Not Throw Sausage Pizza Away"},
+{c:"osi",q:"MAC addresses live at which layer?",a:"#Layer 2\n48-bit hardware address burned into the NIC"},
+{c:"osi",q:"IP addresses live at which layer?",a:"#Layer 3"},
+{c:"osi",q:"TCP, UDP & port numbers live at which layer?",a:"#Layer 4"},
+{c:"osi",q:"Hub vs switch vs router — layers",a:"Hub = L1, Switch = L2, Router = L3\n(a multilayer switch also routes at L3)",s:"Hub L1, Switch L2, Router L3"},
+{c:"osi",q:"Layer 4 vs Layer 7 load balancer",a:"L4: decides by IP & port — fast\nL7: inspects HTTP content (URLs, cookies) — smarter",s:"L4 uses IP/port, L7 inspects HTTP content"},
+{c:"osi",q:"Encapsulation when SENDING data",a:"Down the stack: data, segment, packet, frame, bits\nEach layer wraps the one above",s:"Data, segment, packet, frame, bits"},
+
+/* ---------- PORTS & PROTOCOLS ---------- */
+{c:"ports",q:"FTP",a:"#20 / 21\n20 = data, 21 = control (TCP)"},
+{c:"ports",q:"SSH / SFTP / SCP",a:"#22\nTCP — secure shell & secure file transfer"},
+{c:"ports",q:"Telnet",a:"#23\nTCP — unencrypted remote login (avoid)"},
+{c:"ports",q:"SMTP",a:"#25\nTCP — sending mail server-to-server"},
+{c:"ports",q:"DNS",a:"#53\nUDP for queries, TCP for zone transfers"},
+{c:"ports",q:"DHCP",a:"#67 / 68\nUDP — 67 server, 68 client"},
+{c:"ports",q:"TFTP",a:"#69\nUDP — trivial file transfer, no auth"},
+{c:"ports",q:"HTTP",a:"#80\nTCP"},
+{c:"ports",q:"Kerberos",a:"#88\nTicket-based auth used by Active Directory"},
+{c:"ports",q:"POP3 / POP3S",a:"#110 / 995\nTCP — mail retrieval, downloads & deletes"},
+{c:"ports",q:"NTP",a:"#123\nUDP — time sync"},
+{c:"ports",q:"IMAP / IMAPS",a:"#143 / 993\nTCP — mail retrieval, leaves mail on server"},
+{c:"ports",q:"SNMP",a:"#161 / 162\nUDP — 161 agent queries, 162 traps to manager"},
+{c:"ports",q:"LDAP",a:"#389\nTCP — directory services (AD)"},
+{c:"ports",q:"HTTPS",a:"#443\nTCP — HTTP over TLS"},
+{c:"ports",q:"SMB",a:"#445\nTCP — Windows file/printer sharing"},
+{c:"ports",q:"Syslog",a:"#514\nUDP — log messages to a collector"},
+{c:"ports",q:"SMTPS (submission)",a:"#587\nTCP — authenticated mail submission with TLS"},
+{c:"ports",q:"LDAPS",a:"#636\nTCP — LDAP over SSL/TLS"},
+{c:"ports",q:"SQL Server (Microsoft)",a:"#1433\nTCP"},
+{c:"ports",q:"RADIUS",a:"#1812 / 1813\nUDP — 1812 authentication, 1813 accounting"},
+{c:"ports",q:"MySQL",a:"#3306\nTCP"},
+{c:"ports",q:"RDP",a:"#3389\nTCP — Remote Desktop Protocol"},
+{c:"ports",q:"SIP",a:"#5060 / 5061\nVoIP call setup — 5061 is TLS-secured"},
+{c:"ports",q:"TACACS+",a:"#49\nTCP — Cisco AAA protocol"},
+{c:"ports",q:"GRE",a:"#IP protocol 47\nGeneric Routing Encapsulation — a protocol number, not a port"},
+{c:"ports",q:"IKE / ISAKMP (IPSec key exchange)",a:"#UDP 500"},
+{c:"ports",q:"TCP vs UDP",a:"TCP: connection-oriented, reliable, ordered\nUDP: connectionless, fast, no delivery guarantee",s:"TCP reliable/connection, UDP fast/connectionless"},
+{c:"ports",q:"TCP three-way handshake",a:"#SYN, SYN/ACK, ACK"},
+{c:"ports",q:"ICMP is used by…",a:"#ping & traceroute\nError/diagnostic messages — Layer 3, no ports"},
+{c:"ports",q:"Unicast / broadcast / multicast / anycast",a:"Unicast one-to-one, Broadcast one-to-all,\nMulticast one-to-group, Anycast one-to-nearest",s:"To one, to all, to a group, to the nearest"},
+{c:"ports",q:"Well-known port range",a:"#0 – 1023\nRegistered 1024-49151, dynamic/ephemeral 49152-65535"},
+
+/* ---------- IP & SUBNETTING ---------- */
+{c:"ip",q:"/26 — hosts per subnet?",a:"#62 usable\n64 addresses minus network & broadcast; block size 64"},
+{c:"ip",q:"/27 — hosts per subnet?",a:"#30 usable\n32 addresses; block size 32"},
+{c:"ip",q:"/28 — hosts per subnet?",a:"#14 usable\n16 addresses; block size 16"},
+{c:"ip",q:"/29 — hosts per subnet?",a:"#6 usable\n8 addresses; block size 8"},
+{c:"ip",q:"/30 — hosts & classic use",a:"#2 usable\nPoint-to-point router links"},
+{c:"ip",q:"/25 in dotted decimal",a:"#255.255.255.128\n126 usable hosts"},
+{c:"ip",q:"/26 in dotted decimal",a:"#255.255.255.192"},
+{c:"ip",q:"/27 in dotted decimal",a:"#255.255.255.224"},
+{c:"ip",q:"/28 in dotted decimal",a:"#255.255.255.240"},
+{c:"ip",q:"RFC 1918 private ranges",a:"10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16",s:"10/8, 172.16/12, 192.168/16"},
+{c:"ip",q:"APIPA address range means what?",a:"#169.254.x.x\nClient failed to reach a DHCP server"},
+{c:"ip",q:"Fast method: find a host's subnet",a:"Magic number = 256 minus the mask octet\nSubnets count up by that block size",s:"256 minus the mask octet = block size"},
+{c:"ip",q:"Class A / B / C first-octet ranges",a:"A: 1-126 (/8)\nB: 128-191 (/16)\nC: 192-223 (/24)",s:"A 1-126, B 128-191, C 192-223"},
+{c:"ip",q:"Loopback address",a:"#127.0.0.1\nIPv6: ::1 — tests the local TCP/IP stack"},
+{c:"ip",q:"Multicast (Class D) range",a:"#224.0.0.0 – 239.255.255.255"},
+{c:"ip",q:"CIDR / VLSM lets you…",a:"Ignore class rules and size subnets exactly to need\nSlash notation = number of network bits",s:"Right-size subnets with slash notation"},
+{c:"ip",q:"IPv6 address size & format",a:"#128-bit\nEight groups of hex separated by colons"},
+{c:"ip",q:"IPv6 double-colon shorthand rule",a:"The double colon compresses one run of zeros\nAllowed only ONCE per address",s:"Compresses zeros — once per address"},
+{c:"ip",q:"IPv6 link-local prefix",a:"#FE80::/10\nAuto-configured on every IPv6 interface"},
+{c:"ip",q:"IPv6 global unicast starts with…",a:"#2000::/3\nThe public internet range"},
+{c:"ip",q:"Dual stack",a:"Running IPv4 and IPv6 at the same time on the same interface"},
+{c:"ip",q:"NAT64",a:"Translates between IPv6-only clients and IPv4 servers"},
+{c:"ip",q:"IPv6 tunneling (6to4, Teredo)",a:"Encapsulates IPv6 packets inside IPv4 to cross v4-only networks",s:"IPv6 wrapped inside IPv4"},
+
+/* ---------- CLOUD & MODERN ---------- */
+{c:"cloud",q:"IaaS",a:"#Infrastructure as a Service\nRent VMs, storage, network — YOU manage the OS and up (EC2)"},
+{c:"cloud",q:"PaaS",a:"#Platform as a Service\nProvider runs OS & runtime — you just deploy your code"},
+{c:"cloud",q:"SaaS",a:"#Software as a Service\nFinished app delivered over the internet (M365, Gmail)"},
+{c:"cloud",q:"Public vs private vs hybrid cloud",a:"Public: shared provider infrastructure\nPrivate: yours alone\nHybrid: mix of both",s:"Shared provider / yours alone / a mix"},
+{c:"cloud",q:"VPC",a:"Virtual Private Cloud\nYour isolated network segment inside a public cloud"},
+{c:"cloud",q:"Network security group",a:"Cloud firewall rules on instances/subnets\nAllow/deny by port, protocol, and source"},
+{c:"cloud",q:"Internet gateway vs NAT gateway",a:"IGW: two-way public access for the VPC\nNAT GW: outbound-only internet for private subnets",s:"IGW two-way public, NAT GW outbound-only"},
+{c:"cloud",q:"NFV",a:"Network Functions Virtualization\nFirewalls, routers, LBs as VMs instead of hardware boxes"},
+{c:"cloud",q:"SDN's big idea",a:"Separate the CONTROL plane from the DATA plane\nA central controller programs many devices",s:"Control plane split from data plane"},
+{c:"cloud",q:"SD-WAN",a:"Software-managed WAN over broadband/LTE/MPLS\nPicks the best path per application between sites"},
+{c:"cloud",q:"SASE",a:"Secure Access Service Edge\nSD-WAN plus cloud-delivered security (ZTNA, SWG, CASB) in one service"},
+{c:"cloud",q:"Infrastructure as Code (IaC)",a:"Define networks/servers in files (Terraform, Ansible)\nRepeatable, version-controlled, prevents config drift"},
+{c:"cloud",q:"Scalability vs elasticity",a:"Scalability: CAN grow to meet demand\nElasticity: grows AND shrinks automatically",s:"Scale = can grow; elastic = auto grow/shrink"},
+{c:"cloud",q:"Multitenancy",a:"Many customers share the same infrastructure, logically isolated from each other"},
+
+/* ---------- CABLING & FIBER ---------- */
+{c:"cable",q:"LC connector",a:"Small square Lucent/Little Connector, snap-in latch\nMost common on SFP transceivers"},
+{c:"cable",q:"SC connector",a:"Larger square Standard/Square Connector, push-pull\nStick and Click"},
+{c:"cable",q:"ST connector",a:"Round, bayonet TWIST lock\nStick and Twist — older multimode"},
+{c:"cable",q:"MPO / MTP connector",a:"Multi-fiber push-on — one connector, 12+ fibers\nUsed for 40/100G trunks"},
+{c:"cable",q:"Single-mode fiber: core & light source",a:"#9 micron — laser\nLong distance (km), yellow jacket, OS1/OS2"},
+{c:"cable",q:"Multimode fiber: core & light source",a:"#50 or 62.5 micron — LED/VCSEL\nShort distance, orange/aqua jacket, OM1-OM5"},
+{c:"cable",q:"SMF vs MMF wavelengths",a:"SMF: 1310 / 1550 nm\nMMF: 850 / 1300 nm",s:"SMF 1310/1550, MMF 850/1300"},
+{c:"cable",q:"SFP vs SFP+ vs QSFP+",a:"SFP: 1 Gb — SFP+: 10 Gb — QSFP+: 40 Gb",s:"1 Gb / 10 Gb / 40 Gb"},
+{c:"cable",q:"Cat5e max speed & distance",a:"#1 Gbps @ 100 m"},
+{c:"cable",q:"Cat6 max speed",a:"#10 Gbps — but only to 55 m\n1 Gbps at the full 100 m"},
+{c:"cable",q:"Cat6a max speed & distance",a:"#10 Gbps @ 100 m\nThe standard answer for a 10Gb copper run"},
+{c:"cable",q:"Plenum-rated cable — when required?",a:"In air-handling spaces (above drop ceilings, HVAC ducts)\nLow-smoke fire-resistant jacket (CMP)",s:"Air-handling spaces like drop ceilings"},
+{c:"cable",q:"Coax type & connector for cable internet",a:"RG-6 with F-type connector\n(BNC = older coax networking/CCTV)",s:"RG-6 with F-type"},
+{c:"cable",q:"DAC cable",a:"Direct Attach Copper — twinax with transceivers pre-attached\nCheap short 10G+ links inside a rack"},
+{c:"cable",q:"568A vs 568B — what makes a crossover?",a:"A on one end, B on the other = crossover\nSame both ends = straight-through",s:"A one end plus B the other"},
+{c:"cable",q:"Dirty fiber connector or bad splice shows as…",a:"High dB loss / attenuation\nOTDR locates the exact distance to the fault",s:"High dB loss on the link"},
+{c:"cable",q:"Transceiver rules for a clean fiber link",a:"Match wavelength, speed, and fiber type on BOTH ends\nMismatch = no link light or errors",s:"Both ends match wavelength, speed, fiber type"},
+
+/* ---------- APPLIANCES & ICS ---------- */
+{c:"ics",q:"SCADA",a:"Supervisory Control And Data Acquisition\nMonitors industrial processes across large areas"},
+{c:"ics",q:"PLC",a:"Programmable Logic Controller\nRuggedized computer directly controlling machinery"},
+{c:"ics",q:"HMI",a:"Human-Machine Interface\nThe screen operators use to view & control the ICS"},
+{c:"ics",q:"RTU",a:"Remote Terminal Unit\nField device relaying sensor data back to SCADA"},
+{c:"ics",q:"Number one network design rule for ICS/OT",a:"Segment it — isolate from the corporate LAN\nStrict firewalling or air gap; rarely patchable",s:"Isolate it from the corporate LAN"},
+{c:"ics",q:"IDS vs IPS",a:"IDS: detects & alerts (out of band)\nIPS: sits inline and BLOCKS",s:"IDS alerts, IPS blocks inline"},
+{c:"ics",q:"Forward vs reverse proxy",a:"Forward: hides CLIENTS going out (filtering, caching)\nReverse: fronts SERVERS coming in (LB, TLS offload)",s:"Forward hides clients, reverse fronts servers"},
+{c:"ics",q:"Load balancer",a:"Distributes traffic across multiple servers\nHealth checks, session persistence"},
+{c:"ics",q:"CDN",a:"Content Delivery Network\nCaches content at edge locations near users — cuts latency & origin load"},
+{c:"ics",q:"NAS vs SAN",a:"NAS: file-level storage over Ethernet (SMB/NFS)\nSAN: block-level over a dedicated network (iSCSI/FC)",s:"NAS file-level, SAN block-level"},
+{c:"ics",q:"QoS",a:"Prioritizes traffic classes — voice/video first\nDSCP markings tag packet priority"},
+{c:"ics",q:"VoIP's two protocol jobs",a:"SIP sets up and tears down the call\nRTP carries the actual voice stream",s:"SIP signals, RTP carries voice"},
+{c:"ics",q:"Honeynet vs honeypot",a:"Honeypot: one decoy system\nHoneynet: a whole decoy network of them",s:"One decoy vs a decoy network"},
+
+/* ---------- ROUTING & NAT ---------- */
+{c:"route",q:"Static vs dynamic routing",a:"Static: manually configured, zero overhead, doesn't adapt\nDynamic: protocols learn routes & adapt automatically",s:"Manual & fixed vs learned & adaptive"},
+{c:"route",q:"Route selection order",a:"1. Longest prefix match\n2. Lowest administrative distance\n3. Lowest metric",s:"Longest prefix, then lowest AD, then metric"},
+{c:"route",q:"Administrative distances to memorize",a:"Connected 0, Static 1, eBGP 20,\nEIGRP 90, OSPF 110, RIP 120 — lower wins",s:"Conn 0, Static 1, eBGP 20, EIGRP 90, OSPF 110, RIP 120"},
+{c:"route",q:"OSPF — type & metric",a:"#Link-state\nMetric = cost (from bandwidth); interior protocol; area 0 = backbone"},
+{c:"route",q:"BGP — type & use",a:"#Path vector\nTHE internet routing protocol — between autonomous systems"},
+{c:"route",q:"EIGRP",a:"Cisco advanced distance-vector (hybrid)\nAD 90, fast convergence"},
+{c:"route",q:"Default route",a:"#0.0.0.0/0\nGateway of last resort (IPv6: ::/0)"},
+{c:"route",q:"NAT vs PAT",a:"NAT: one private to one public IP\nPAT (overload): many privates share ONE public via ports — home routers",s:"NAT one-to-one, PAT many-to-one via ports"},
+{c:"route",q:"Port forwarding",a:"Maps an outside port to an inside host and port\nHow one internal service gets exposed through NAT"},
+{c:"route",q:"FHRP — purpose & the two names",a:"Two routers share a virtual gateway IP for failover\nVRRP (open standard), HSRP (Cisco)",s:"Redundant gateways: VRRP & HSRP"},
+{c:"route",q:"Virtual IP (VIP)",a:"Floating address shared by redundant devices\nFHRPs and load balancers hand it around"},
+{c:"route",q:"Router-on-a-stick",a:"One router interface, subinterfaces per VLAN, trunked to a switch\nRoutes between VLANs over a single link",s:"Subinterfaces on one trunked link route VLANs"},
+{c:"route",q:"TTL does what?",a:"Decrements at every router hop; dropped at zero\nPrevents loops — traceroute exploits it",s:"Drops packets after too many hops"},
+{c:"route",q:"Convergence",a:"All routers agreeing on the current topology after a change"},
+
+/* ---------- SWITCHING & VLANS ---------- */
+{c:"switch",q:"VLAN in one line",a:"Logical broadcast-domain segmentation on one physical switch"},
+{c:"switch",q:"Access vs trunk port",a:"Access: ONE VLAN, to end devices\nTrunk: carries MANY VLANs between switches (802.1Q tags)",s:"Access = one VLAN, trunk = many tagged"},
+{c:"switch",q:"802.1Q",a:"The trunking standard\nInserts a 4-byte VLAN tag into Ethernet frames"},
+{c:"switch",q:"Native VLAN",a:"The one VLAN crossing a trunk UNTAGGED\nMismatches cause problems — change it off VLAN 1",s:"The untagged VLAN on a trunk"},
+{c:"switch",q:"Voice VLAN",a:"Separate VLAN for IP phones sharing a port with a PC\nEnables QoS for calls"},
+{c:"switch",q:"SVI",a:"Switch Virtual Interface — an IP address on a VLAN\nHow a Layer 3 switch routes between VLANs"},
+{c:"switch",q:"Link aggregation",a:"#802.3ad / LACP\nBundles multiple links into one logical pipe — bandwidth plus redundancy"},
+{c:"switch",q:"Spanning Tree's job",a:"Prevents Layer 2 loops by blocking redundant paths\nElects a root bridge; one best path to it from everywhere",s:"Blocks redundant paths to stop L2 loops"},
+{c:"switch",q:"Root bridge selection",a:"#Lowest bridge ID wins\nPriority first, then lowest MAC — set your core's priority manually"},
+{c:"switch",q:"RSTP port states",a:"Discarding, Learning, Forwarding\n(802.1w — converges far faster than legacy STP)",s:"Discarding, Learning, Forwarding"},
+{c:"switch",q:"Default MTU & jumbo frames",a:"#1500 bytes\nJumbo is about 9000 — must match end-to-end (storage networks)"},
+{c:"switch",q:"PoE standards & power",a:"802.3af = 15.4W\n802.3at (PoE+) = 30W\n802.3bt = 60-100W",s:"af 15.4W, at 30W, bt 60-100W"},
+{c:"switch",q:"Duplex mismatch symptom",a:"Link is up but SLOW, with late collisions & CRC errors\nSet both sides auto/auto or hard-code both",s:"Slow link with late collisions"},
+{c:"switch",q:"How a switch learns & floods",a:"Learns source MACs into its table\nFloods frames for unknown destinations out all ports",s:"Learns sources, floods unknowns"},
+
+/* ---------- WIRELESS ---------- */
+{c:"wifi",q:"802.11ax is also called…",a:"WiFi 6 (6E adds the 6 GHz band)\nOFDMA, better in dense environments"},
+{c:"wifi",q:"802.11ac — band & name",a:"WiFi 5 — 5 GHz only\nUp to about gigabit with MU-MIMO"},
+{c:"wifi",q:"Non-overlapping 2.4 GHz channels",a:"#1, 6, 11\nThe only three you should use"},
+{c:"wifi",q:"2.4 GHz vs 5 GHz tradeoff",a:"2.4: longer range, more interference, slower\n5: faster, shorter range, more channels",s:"2.4 far but noisy, 5 fast but shorter"},
+{c:"wifi",q:"WPA3 replaces the 4-way handshake with…",a:"SAE (Simultaneous Authentication of Equals)\nResistant to offline dictionary attacks"},
+{c:"wifi",q:"WPA2-Personal vs WPA2-Enterprise",a:"Personal: pre-shared key\nEnterprise: 802.1X + RADIUS, per-user credentials",s:"PSK vs 802.1X/RADIUS per-user"},
+{c:"wifi",q:"Omni vs directional antennas",a:"Omni: 360-degree coverage, central placement\nDirectional (Yagi/patch): focused beam, point-to-point",s:"All-around coverage vs focused beam"},
+{c:"wifi",q:"Band steering",a:"Pushes capable clients from 2.4 GHz up to 5/6 GHz\nFrees up the crowded band"},
+{c:"wifi",q:"Captive portal",a:"Web page users must pass before getting network access\nHotel/guest WiFi login screens"},
+{c:"wifi",q:"SSID vs BSSID vs ESSID",a:"SSID: network name\nBSSID: the AP radio's MAC\nESSID: same SSID shared across multiple APs",s:"Name / AP's MAC / shared name across APs"},
+{c:"wifi",q:"Channel width tradeoff",a:"Wider (40/80/160 MHz) = faster but more overlap & interference\nOn 2.4 GHz, stay at 20 MHz",s:"Wider is faster but noisier"},
+{c:"wifi",q:"The 6 GHz band",a:"WiFi 6E/7 territory — clean spectrum, shorter range\nWPA3 required"},
+{c:"wifi",q:"Infrastructure vs ad hoc vs mesh",a:"Infrastructure: clients through an AP\nAd hoc: device-to-device\nMesh: APs wirelessly relay to each other",s:"Via AP / device-to-device / APs relay"},
+{c:"wifi",q:"Autonomous vs controller-based APs",a:"Autonomous: each AP configured individually\nLightweight: centrally managed by a wireless LAN controller",s:"Standalone APs vs WLC-managed"},
+{c:"wifi",q:"Requirements for smooth roaming",a:"Same SSID & security on every AP\nOverlapping cells on different non-overlapping channels",s:"Same SSID/security, different channels"},
+{c:"wifi",q:"Site survey / heat map",a:"Measures real coverage, signal, and interference\nDrives AP placement and power settings"},
+
+/* ---------- DHCP, DNS & TIME ---------- */
+{c:"svc",q:"The DHCP lease process",a:"#DORA\nDiscover, Offer, Request, Acknowledge"},
+{c:"svc",q:"DHCP scope",a:"The pool of addresses a DHCP server hands out for a subnet"},
+{c:"svc",q:"Reservation vs exclusion",a:"Reservation: same IP to a specific MAC every time\nExclusion: addresses the server must never hand out",s:"Fixed IP for a MAC vs never-issued range"},
+{c:"svc",q:"DHCP relay / IP helper",a:"Forwards broadcast DHCP requests across routers\nLets one central server cover many subnets",s:"Forwards DHCP across routers"},
+{c:"svc",q:"DHCP lease renewal",a:"Client asks to renew at 50% of the lease time"},
+{c:"svc",q:"DHCP options 3 and 6",a:"Option 3 = default gateway\nOption 6 = DNS servers",s:"3 = gateway, 6 = DNS"},
+{c:"svc",q:"SLAAC",a:"IPv6 client builds its own address from the router advertisement\nNo DHCP server needed"},
+{c:"svc",q:"A vs AAAA record",a:"A: name to IPv4\nAAAA: name to IPv6",s:"A = IPv4, AAAA = IPv6"},
+{c:"svc",q:"CNAME record",a:"An alias — points one name at another name"},
+{c:"svc",q:"MX record",a:"Mail exchanger — where a domain's email gets delivered"},
+{c:"svc",q:"PTR record",a:"Reverse lookup: IP to name\nLives in a reverse zone"},
+{c:"svc",q:"TXT record",a:"Free-form text\nSPF, DKIM, and DMARC email auth live here"},
+{c:"svc",q:"NS record",a:"Names the servers that are authoritative for the zone"},
+{c:"svc",q:"Recursive vs authoritative DNS",a:"Recursive: chases answers for clients (your resolver)\nAuthoritative: OWNS the zone's records",s:"Chases answers vs owns the records"},
+{c:"svc",q:"Forward vs reverse zone",a:"Forward: name to IP\nReverse: IP to name (PTR records)",s:"Name-to-IP vs IP-to-name"},
+{c:"svc",q:"DoH / DoT",a:"DNS over HTTPS (443) / DNS over TLS (853)\nEncrypts DNS queries from snooping",s:"Encrypted DNS on 443 / 853"},
+{c:"svc",q:"DNSSEC",a:"Digitally signs DNS records so responses can't be forged\nIntegrity — not encryption",s:"Signed records — integrity, not encryption"},
+{c:"svc",q:"NTP stratum levels",a:"Stratum 0 = reference clock (GPS/atomic)\nStratum 1 synced to it; each hop adds one",s:"0 = reference clock, add 1 per hop"},
+{c:"svc",q:"PTP",a:"Precision Time Protocol\nSub-microsecond sync for finance/industrial — tighter than NTP"},
+
+/* ---------- MONITORING & DOCS ---------- */
+{c:"ops",q:"SNMP's three pieces",a:"Manager polls Agents\nData is organized in the MIB (OIDs)",s:"Manager, agents, MIB"},
+{c:"ops",q:"SNMP trap vs poll",a:"Poll: manager asks on a schedule\nTrap: agent pushes an alert immediately (UDP 162)",s:"Scheduled ask vs instant push alert"},
+{c:"ops",q:"SNMPv2c vs v3",a:"v2c: plaintext community strings\nv3: authentication plus encryption — always prefer v3",s:"v2c plaintext, v3 auth and encryption"},
+{c:"ops",q:"Syslog severity levels",a:"#0 – 7\n0 Emergency, 1 Alert, 2 Critical, 3 Error, 4 Warning, 5 Notice, 6 Info, 7 Debug"},
+{c:"ops",q:"Flow data (NetFlow-style)",a:"Metadata about conversations — who talked to who, ports, bytes\nNot the packet contents",s:"Conversation metadata, not packet contents"},
+{c:"ops",q:"Packet capture vs flow data",a:"Capture: every byte (Wireshark) — heavy\nFlow: just summaries — cheap to keep",s:"Every byte vs just summaries"},
+{c:"ops",q:"Port mirroring / SPAN",a:"Switch copies traffic from chosen ports to a monitor port\nFeeds captures and IDS sensors",s:"Copies port traffic to a monitor port"},
+{c:"ops",q:"Baseline",a:"A snapshot of normal performance\nYou can't spot abnormal without knowing normal"},
+{c:"ops",q:"SIEM",a:"Aggregates & correlates logs from everything, alerts on patterns\n(Wazuh, Splunk)"},
+{c:"ops",q:"Physical vs logical diagram",a:"Physical: actual devices, cables, racks\nLogical: subnets, VLANs, routing flow",s:"Devices & cables vs subnets & flows"},
+{c:"ops",q:"IPAM",a:"IP Address Management\nTracks which addresses are assigned where"},
+{c:"ops",q:"SLA",a:"Service Level Agreement\nContracted guarantees — uptime percent, response times"},
+{c:"ops",q:"EOL vs EOS",a:"EOL: no longer sold\nEOS: no more updates or support — replace before EOS",s:"Not sold vs not supported"},
+{c:"ops",q:"Change management flow",a:"Request, approval, scheduled window, rollback plan\nAnd document everything",s:"Request, approve, schedule, rollback plan"},
+{c:"ops",q:"Golden config",a:"The approved baseline configuration\nDiff against it to spot drift, restore from it after failures"},
+{c:"ops",q:"Jump box",a:"Hardened intermediary host you must pass through\nto reach devices in a secure segment"},
+{c:"ops",q:"In-band vs out-of-band management",a:"In-band: over the production network\nOOB: separate path (console, mgmt net, LTE) — works when the network is down",s:"Production path vs separate rescue path"},
+
+/* ---------- RESILIENCE & DR ---------- */
+{c:"dr",q:"RTO",a:"#Recovery Time Objective\nMax time allowed to get service BACK after a failure"},
+{c:"dr",q:"RPO",a:"#Recovery Point Objective\nMax DATA you can afford to lose — sets backup frequency"},
+{c:"dr",q:"MTTR",a:"#Mean Time To Repair\nAverage time to fix a failure"},
+{c:"dr",q:"MTBF",a:"#Mean Time Between Failures\nAverage lifespan between failures — reliability measure"},
+{c:"dr",q:"Cold vs warm vs hot site",a:"Cold: empty space — days to recover\nWarm: gear ready, restore data — hours to days\nHot: live replica — minutes",s:"Empty / gear ready / live replica"},
+{c:"dr",q:"Active-active vs active-passive",a:"Active-active: all nodes serve traffic\nActive-passive: standby takes over on failure",s:"All serve vs standby takes over"},
+{c:"dr",q:"Tabletop exercise",a:"A talk-through DR test\nNo systems touched — validates the plan and the people"},
+{c:"dr",q:"UPS role",a:"Battery ride-through for outages and clean power\nBridges to generator or graceful shutdown"},
+{c:"dr",q:"PDU",a:"Power Distribution Unit\nRack power strip — often metered or remotely switched"},
+{c:"dr",q:"Fire suppression for server rooms",a:"Clean agent gas (FM-200 class)\nNot water sprinklers",s:"Clean agent gas, not water"},
+{c:"dr",q:"Server room humidity target",a:"#About 40-60%\nToo low = static discharge, too high = condensation"},
+{c:"dr",q:"NIC teaming",a:"Multiple NICs act as one\nFailover and/or combined throughput"},
+
+/* ---------- SECURITY & AAA ---------- */
+{c:"sec",q:"802.1X: the SUPPLICANT is…",a:"The client device requesting access\n(laptop, phone — runs supplicant software)",s:"The client device requesting access"},
+{c:"sec",q:"802.1X: the AUTHENTICATOR is…",a:"The switch or wireless AP\nThe middleman — blocks traffic until auth passes, doesn't check credentials itself",s:"The switch or AP in the middle"},
+{c:"sec",q:"802.1X: the AUTHENTICATION SERVER is…",a:"The RADIUS server\nActually validates credentials (often against AD)",s:"The RADIUS server validating credentials"},
+{c:"sec",q:"RADIUS vs TACACS+: encryption",a:"RADIUS encrypts ONLY the password\nTACACS+ encrypts the ENTIRE payload",s:"RADIUS just the password, TACACS+ everything"},
+{c:"sec",q:"RADIUS vs TACACS+: transport",a:"RADIUS = UDP 1812/1813\nTACACS+ = TCP 49",s:"UDP 1812/1813 vs TCP 49"},
+{c:"sec",q:"Which AAA protocol fully separates the three A's?",a:"TACACS+\nCisco-developed; best for device admin control"},
+{c:"sec",q:"The three A's in AAA",a:"Authentication — who are you\nAuthorization — what can you do\nAccounting — what did you do",s:"Who you are, what you can do, what you did"},
+{c:"sec",q:"EAP-TLS requires what on BOTH sides?",a:"Certificates on client AND server\nMutual cert auth — the most secure common EAP",s:"Certificates on client and server"},
+{c:"sec",q:"PEAP protects EAP how?",a:"Wraps EAP inside a TLS tunnel\nOnly the server needs a certificate",s:"TLS tunnel; server-side cert only"},
+{c:"sec",q:"NAC does what?",a:"Checks device health/posture before granting access\nPatches, AV, compliance — often paired with 802.1X",s:"Posture-checks devices before access"},
+{c:"sec",q:"Zero trust in one line",a:"Never trust, always verify\nAuthenticate & authorize every request regardless of location",s:"Never trust, always verify"},
+{c:"sec",q:"Site-to-site vs client-to-site VPN",a:"Site-to-site: router-to-router, always on, joins offices\nClient-to-site: individual user dials in",s:"Office-to-office vs one user dialing in"},
+{c:"sec",q:"Split tunnel vs full tunnel",a:"Split: only corporate traffic uses the VPN\nFull: ALL traffic goes through it",s:"Only corp traffic vs all traffic"},
+{c:"sec",q:"IPSec: AH vs ESP",a:"AH: integrity plus auth, NO encryption\nESP: encryption plus integrity — ESP gives confidentiality",s:"AH no encryption, ESP encrypts"},
+{c:"sec",q:"IPSec key exchange",a:"IKE (Internet Key Exchange)\nRuns over UDP 500"},
+{c:"sec",q:"Evil twin attack",a:"Rogue AP broadcasting a legit-looking SSID\nUsers connect; attacker intercepts traffic"},
+{c:"sec",q:"Deauthentication attack",a:"Spoofed deauth frames kick clients off WiFi\nOften used to capture the WPA handshake on reconnect"},
+{c:"sec",q:"ARP poisoning",a:"Attacker answers ARPs with their own MAC\nBecomes man-in-the-middle on the LAN"},
+{c:"sec",q:"ARP poisoning mitigation",a:"Dynamic ARP Inspection (DAI)\nValidates ARP replies against the DHCP snooping table"},
+{c:"sec",q:"Rogue DHCP mitigation",a:"DHCP snooping\nSwitch only allows DHCP offers from trusted ports"},
+{c:"sec",q:"VLAN hopping — two methods",a:"Double tagging & switch spoofing (trunk negotiation)\nFix: disable auto-trunking, move the native VLAN off 1",s:"Double tagging & switch spoofing"},
+{c:"sec",q:"Port security on a switch",a:"Limits which and how many MACs can use a port\nViolation: shutdown, restrict, or protect"},
+{c:"sec",q:"BPDU guard protects against…",a:"Rogue switches on access ports\nPort shuts down if it receives spanning-tree BPDUs"},
+{c:"sec",q:"MAC flooding",a:"Overflows the CAM table so the switch floods like a hub\nAttacker sniffs everything — port security stops it",s:"Overflow the CAM table to sniff traffic"},
+{c:"sec",q:"On-path attack (was MITM)",a:"Attacker sits between two parties, relaying or altering traffic\nARP poisoning & evil twins are common vectors"},
+{c:"sec",q:"DNS poisoning",a:"Corrupt entries in a DNS cache send users to malicious IPs\nDNSSEC is the mitigation"},
+{c:"sec",q:"Honeypot",a:"Decoy system built to attract and study attackers\nKeeps them off real assets"},
+{c:"sec",q:"CIA triad",a:"#Confidentiality, Integrity, Availability"},
+{c:"sec",q:"Vulnerability vs exploit vs threat vs risk",a:"Vulnerability: the weakness\nExploit: how it gets abused\nThreat: who or what might\nRisk: likelihood times impact",s:"Weakness, abuse method, actor, likelihood x impact"},
+{c:"sec",q:"Least privilege",a:"Grant only the access needed to do the job — nothing more"},
+{c:"sec",q:"Role-based access control",a:"Permissions attach to roles\nUsers get roles, not individual grants"},
+{c:"sec",q:"The three MFA factor types",a:"Something you KNOW, HAVE, and ARE\nPassword plus phone plus fingerprint",s:"Know, have, are"},
+{c:"sec",q:"SSO",a:"Single Sign-On\nOne login grants access to many systems (SAML/OIDC behind it)"},
+{c:"sec",q:"SAML",a:"XML standard passing authentication between an identity provider and services\nThe engine of enterprise SSO",s:"IdP-to-service auth standard for SSO"},
+{c:"sec",q:"Geofencing",a:"Allow or deny access based on physical location"},
+{c:"sec",q:"Screened subnet (DMZ)",a:"Public-facing servers isolated between two firewall layers\nA breach there doesn't reach the internal LAN",s:"Isolated zone for public-facing servers"},
+{c:"sec",q:"Device hardening basics",a:"Change default creds, disable unused ports & services,\npatch firmware, SNMPv3 only",s:"Kill defaults, disable unused, patch"},
+{c:"sec",q:"Four social engineering attacks to know",a:"Phishing (email), tailgating (through the door behind you),\nshoulder surfing, dumpster diving",s:"Phishing, tailgating, shoulder surfing, dumpster diving"},
+{c:"sec",q:"Encryption in transit vs at rest",a:"Transit: TLS/IPSec while data moves\nAt rest: disk/database encryption while stored",s:"Moving data vs stored data"},
+{c:"sec",q:"Self-signed vs CA-signed certificate",a:"Self-signed: free, browsers don't trust it — internal use\nCA-signed: chains to a trusted root",s:"Untrusted internal vs trusted chain"},
+
+/* ---------- TROUBLESHOOTING ---------- */
+{c:"tshoot",q:"The 7 troubleshooting steps, in order",a:"1 Identify the problem\n2 Establish a theory\n3 Test the theory\n4 Plan of action\n5 Implement or escalate\n6 Verify full functionality\n7 Document",s:"Identify, theorize, test, plan, implement, verify, document"},
+{c:"tshoot",q:"Approaches for establishing a theory",a:"Question the obvious\nWork top-down or bottom-up through the OSI stack",s:"Question the obvious; walk the OSI stack"},
+{c:"tshoot",q:"CRC errors climbing on an interface",a:"Bad cable/connector, EMI, or a duplex mismatch\nCheck physical layer first",s:"Bad cable, EMI, or duplex mismatch"},
+{c:"tshoot",q:"Runts and giants",a:"Runts: frames under 64 bytes — collisions/bad NIC\nGiants: frames over the MTU — jumbo/MTU misconfig",s:"Too-small frames vs over-MTU frames"},
+{c:"tshoot",q:"Port shows err-disabled",a:"The switch shut it down for a violation (port security, BPDU guard)\nFix the cause, then shut / no shut",s:"Violation shutdown — fix cause, bounce port"},
+{c:"tshoot",q:"Client pulled a 169.254.x.x address",a:"DHCP is unreachable\nServer down, relay missing, or the pool is exhausted",s:"DHCP unreachable or exhausted"},
+{c:"tshoot",q:"Duplicate IP symptom",a:"Intermittent connectivity and ARP conflicts\nTwo hosts fighting over one address",s:"Intermittent drops from an address conflict"},
+{c:"tshoot",q:"Can reach the local subnet, nothing beyond it",a:"#Wrong or missing default gateway"},
+{c:"tshoot",q:"Ping by IP works, by hostname fails",a:"#DNS problem\nCheck configured DNS servers, try nslookup"},
+{c:"tshoot",q:"Wrong subnet mask symptom",a:"Can reach SOME hosts but not others\non what should be the same network",s:"Some same-net hosts unreachable"},
+{c:"tshoot",q:"Broadcast storm plus MAC flapping",a:"#Layer 2 loop\nSTP failed, was disabled, or someone looped a cable"},
+{c:"tshoot",q:"Traffic crawls along a weird path",a:"Wrong STP root bridge — a closet switch won the election\nSet the core's priority lowest",s:"Wrong root bridge won the election"},
+{c:"tshoot",q:"Latency vs jitter",a:"Latency: the delay\nJitter: VARIATION in delay — kills VoIP; QoS is the fix",s:"Delay vs variation in delay"},
+{c:"tshoot",q:"Common packet loss causes",a:"Congestion, bad cabling, duplex mismatch, overloaded gear",s:"Congestion, bad cable, duplex, overload"},
+{c:"tshoot",q:"Crosstalk",a:"Signal bleeding between wire pairs\nPoor termination or cheap cable — keep the twists tight to the punch",s:"Signal bleed between pairs"},
+{c:"tshoot",q:"Attenuation",a:"Signal weakens over distance\nStay under 100 m on copper or add a switch/repeater",s:"Signal fades over distance"},
+{c:"tshoot",q:"TX/RX reversed",a:"Straight-through used where crossover was needed\nAuto-MDIX on modern gear usually saves you",s:"Wrong cable type; auto-MDIX compensates"},
+{c:"tshoot",q:"2.4 GHz interference sources",a:"Microwaves, Bluetooth, cordless phones, neighboring WLANs\nMove to 5/6 GHz or stick to 1/6/11",s:"Microwaves, Bluetooth, neighbors"},
+{c:"tshoot",q:"WiFi fine near the AP, drops across the room",a:"Coverage/signal problem\nSurvey it — add APs, adjust power or antenna placement",s:"Coverage gap — survey and add APs"},
+
+/* ---------- CLI & FIELD TOOLS ---------- */
+{c:"cli",q:"Which tool: is this host reachable at all?",a:"#ping\nICMP echo — first connectivity check"},
+{c:"cli",q:"Which tool: WHERE along the path does it fail?",a:"#tracert / traceroute\nShows every router hop (tracert = Windows)"},
+{c:"cli",q:"Which tool: is DNS resolving this name?",a:"#nslookup / dig\nnslookup = Windows, dig = Linux (more detail)"},
+{c:"cli",q:"Which tool: what IP/mask/gateway does THIS machine have?",a:"#ipconfig / ip addr\nipconfig /all adds DNS, DHCP, MAC"},
+{c:"cli",q:"Which tool: what connections & listening ports are open here?",a:"#netstat\nWindows -ano adds PIDs (modern Linux: ss)"},
+{c:"cli",q:"Which tool: what MAC does this IP map to?",a:"#arp -a\nDumps the local ARP cache"},
+{c:"cli",q:"Which tool: capture raw packets from the CLI",a:"#tcpdump\nLinux packet capture (GUI: Wireshark)"},
+{c:"cli",q:"Which tool: what hosts and ports are alive on this subnet?",a:"#nmap\nNetwork & port scanner"},
+{c:"cli",q:"Which tool: measure real throughput between two hosts",a:"#iperf\nClient/server bandwidth test"},
+{c:"cli",q:"Which tool: show this PC's routing table",a:"#route print / ip route\nWindows / Linux"},
+{c:"cli",q:"Which switch command: which port is this MAC on?",a:"#show mac address-table"},
+{c:"cli",q:"ipconfig /release then /renew",a:"Drop and re-request the DHCP lease\nFirst move for a bad or stale client IP"},
+{c:"cli",q:"ipconfig /flushdns",a:"Clears the local DNS resolver cache\nFixes stale name resolution after a record change"},
+{c:"cli",q:"pathping combines…",a:"ping plus tracert\nTraces the route, then measures per-hop loss over time"},
+{c:"cli",q:"Windows: test one specific TCP port",a:"#Test-NetConnection\nTest-NetConnection host -Port 443 (Linux: nc)"},
+{c:"cli",q:"LLDP / CDP",a:"Neighbor discovery — see what device & port is on the far end\nCDP = Cisco, LLDP = open standard",s:"Shows the device/port on the far end"},
+{c:"cli",q:"Toner probe",a:"Tone generator plus probe\nFinds where a cable runs or ends in a bundle"},
+{c:"cli",q:"Cable tester",a:"Checks wiremap\nOpens, shorts, miswires, split pairs"},
+{c:"cli",q:"Wi-Fi analyzer",a:"Shows channels, signal strength, and interference\nUse it to pick clean channels"},
+{c:"cli",q:"Visual fault locator",a:"Red laser that lights up fiber breaks and tight bends"},
+{c:"cli",q:"Protocol analyzer",a:"#Wireshark\nDecodes captured packets for deep inspection"},
+{c:"cli",q:"Network tap vs SPAN",a:"Tap: inline hardware copy — never drops under load\nSPAN: switch-based mirror — can drop when busy",s:"Hardware copy vs switch mirror"},
+];
+
+/* stable ids so future card edits never scramble progress */
+CARDS.forEach(cd=>{
+  cd.sid=cd.c+"|"+cd.q;
+  const lines=cd.a.split("\n");
+  const big=lines.find(l=>l.startsWith("#"));
+  cd.short=(cd.s||(big?big.slice(1):lines[0])).trim();
+});
+
+/* ============ STATE / STORAGE (GitHub Gist sync + on-device fallback) ============ */
+const KEY="netplus-cards-v4";
+const TOKKEY="netplus-gh-token";
+const GIDKEY="netplus-gist-id";
+const GFILE="netplus-state.json";
+let stats={};
+let sessionsDone=0;
+let updatedAt=0;
+let token="",gistId="";
+try{token=localStorage.getItem(TOKKEY)||"";gistId=localStorage.getItem(GIDKEY)||"";}catch(e){}
+
+function payload(){return {stats,sessionsDone,updatedAt};}
+function adopt(d){stats=d.stats||{};sessionsDone=d.sessionsDone||0;updatedAt=d.updatedAt||0;}
+function localGet(){try{const v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function localSet(){try{localStorage.setItem(KEY,JSON.stringify(payload()));}catch(e){}}
+
+function gh(path,opts){
+  opts=opts||{};
+  const h={"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};
+  if(opts.body)h["Content-Type"]="application/json";
+  return fetch("https://api.github.com"+path,{method:opts.method||"GET",headers:h,body:opts.body,cache:"no-store"});
+}
+async function findGist(){
+  if(gistId){
+    const r=await gh("/gists/"+gistId);
+    if(r.ok)return await r.json();
+    if(r.status!==404)return null;
+    gistId="";try{localStorage.removeItem(GIDKEY);}catch(e){}
+  }
+  const r=await gh("/gists?per_page=100");
+  if(!r.ok)return null;
+  const list=await r.json();
+  const hit=Array.isArray(list)?list.find(g=>g.files&&g.files[GFILE]):null;
+  if(hit){
+    gistId=hit.id;try{localStorage.setItem(GIDKEY,gistId);}catch(e){}
+    const r2=await gh("/gists/"+gistId);
+    return r2.ok?await r2.json():null;
+  }
+  const c=await gh("/gists",{method:"POST",body:JSON.stringify({description:"Net+ Gym Cards progress",public:false,files:{[GFILE]:{content:"{}"}}})});
+  if(!c.ok)return null;
+  const made=await c.json();
+  gistId=made.id;try{localStorage.setItem(GIDKEY,gistId);}catch(e){}
+  return made;
+}
+async function serverGet(){
+  if(!token)return null;
+  try{
+    const g=await findGist();
+    if(!g)return null;
+    const f=g.files&&g.files[GFILE];
+    if(!f)return {};
+    let content=f.content;
+    if(f.truncated&&f.raw_url){const r=await fetch(f.raw_url,{cache:"no-store"});content=await r.text();}
+    const d=JSON.parse(content||"{}");
+    return (d&&typeof d==="object")?d:{};
+  }catch(e){return null;}
+}
+async function serverPut(){
+  if(!token||!gistId)return false;
+  try{
+    const r=await gh("/gists/"+gistId,{method:"PATCH",body:JSON.stringify({files:{[GFILE]:{content:JSON.stringify(payload())}}})});
+    return r.ok;
+  }catch(e){return false;}
+}
+const SYNC_LABEL={ok:"synced",off:"local only",unlinked:"not linked",syncing:"syncing"};
+function setSync(state){
+  const el=document.querySelector("#sync");
+  if(!el)return;
+  el.textContent=SYNC_LABEL[state]||state;
+  el.className=state;
+}
+function homeVisible(){return document.querySelector("#home").style.display!=="none";}
+async function loadState(){
+  const local=localGet();
+  if(local)adopt(local);
+  renderHome();
+  if(!token){setSync("unlinked");return;}
+  setSync("syncing");
+  const remote=await serverGet();
+  if(remote===null){setSync("off");return;}
+  const chosen=(!local)?remote:(((local.updatedAt||0)>(remote.updatedAt||0))?local:remote);
+  adopt(chosen);
+  localSet();
+  if((remote.updatedAt||0)<updatedAt)await serverPut();
+  setSync("ok");
+  if(homeVisible())renderHome();
+}
+async function saveState(){
+  updatedAt=Date.now();
+  localSet();
+  if(!token){setSync("unlinked");return;}
+  const ok=await serverPut();
+  setSync(ok?"ok":"off");
+}
+function stat(cd){return stats[cd.sid]||(stats[cd.sid]={seen:0,right:0,streak:0,level:1});}
+function mastered(cd){const s=stats[cd.sid];return !!s&&s.level>=3&&s.streak>=2;}
+function isWeak(cd){return !mastered(cd);}
+
+/* ================= HOME ================= */
+const $=q=>document.querySelector(q);
+function renderHome(){
+  $("#home").style.display="block";
+  $("#session").style.display="none";
+  $("#done").style.display="none";
+  $("#linkbox").style.display=token?"none":"block";
+  $("#unlinkbtn").style.display=token?"inline":"none";
+  const weakN=CARDS.filter(isWeak).length;
+  const m=CARDS.length-weakN;
+  $("#streakbox").innerHTML = sessionsDone?`<b>${m}</b>/${CARDS.length} mastered`:"";
+  let html="";
+  html+=deckBtn("weak","Weak spots",weakN?`${weakN} cards not yet mastered`:"All mastered — run any deck to stay sharp",weakN||CARDS.length,"var(--green)",true);
+  html+=deckBtn("all","Everything, shuffled","20 random from the full stack",CARDS.length,"var(--amber)",false);
+  for(const sec of SECTIONS){
+    html+=`<div class="dh">${sec.h}</div>`;
+    for(const k of sec.decks){
+      const pool=CARDS.filter(c=>c.c===k);
+      const mk=pool.filter(mastered).length;
+      html+=deckBtn(k,CATS[k].name,subtitle(k),`${mk}/${pool.length}`,CATS[k].color,false);
+    }
+  }
+  $("#decks").innerHTML=html;
+  document.querySelectorAll(".deck").forEach(b=>b.onclick=()=>startSession(b.dataset.k));
+}
+function subtitle(k){
+  return {
+    osi:"Layers, PDUs, what lives where",
+    ports:"The free points — make them automatic",
+    ip:"Masks, host counts, IPv6 essentials",
+    cloud:"Service models, VPC, SDN, SASE",
+    cable:"Connectors, fiber types, Cat ratings",
+    ics:"SCADA terms plus appliance roles",
+    route:"Protocols, AD values, NAT, FHRP",
+    switch:"VLANs, trunks, STP, PoE",
+    wifi:"Standards, channels, WPA3, roaming",
+    svc:"DORA, record types, stratum",
+    ops:"SNMP, syslog, flows, docs, configs",
+    dr:"RTO/RPO, sites, power & environment",
+    sec:"Your weakest exam domain: 802.1X, AAA, attacks",
+    tshoot:"Symptom to cause. Biggest domain: 24%",
+    cli:"Scenario to the right tool"
+  }[k]||"";
+}
+function deckBtn(k,t,s,n,color,special){
+  return `<button class="deck ${special?"special":""}" data-k="${k}">
+    <span class="jack" style="background:${color}"></span>
+    <span><span class="t">${t}</span><span class="s">${s}</span></span>
+    <span class="n">${n}</span></button>`;
+}
+$("#resetbtn").onclick=async()=>{
+  if(!confirm("Wipe all card progress?"))return;
+  stats={};sessionsDone=0;await saveState();renderHome();
+};
+
+/* ================= SESSION ================= */
+let queue=[],idx=0,total=0,missedThis=[],rightThis=0,lastDeck="all",flipped=false,locked=false;
+
+function pickDeck(k){
+  let pool;
+  if(k==="all")pool=[...CARDS];
+  else if(k==="weak"){pool=CARDS.filter(isWeak);if(!pool.length)pool=[...CARDS];}
+  else pool=CARDS.filter(c=>c.c===k);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool.slice(0,20).map(cd=>({cd,recycled:false}));
+}
+function startSession(k){
+  lastDeck=k;
+  queue=pickDeck(k);
+  idx=0;total=queue.length;missedThis=[];rightThis=0;
+  $("#home").style.display="none";$("#done").style.display="none";
+  $("#session").style.display="flex";
+  showCard();
+}
+function lvlHtml(level){
+  let pips="";
+  for(let i=1;i<=3;i++)pips+=`<span class="pip ${i<=level?"on":""}"></span>`;
+  const names={1:"EASY",2:"HARD",3:"RECALL"};
+  return pips+`<span class="lbl">${names[level]}</span>`;
+}
+function showCard(){
+  if(idx>=queue.length)return endSession();
+  const {cd}=queue[idx];
+  const s=stat(cd);
+  const level=s.level;
+  flipped=false;locked=false;
+  $("#card").classList.remove("flipped");
+  const cat=CATS[cd.c];
+  $("#chipF").textContent=cat.name;$("#chipF").style.background=cat.color;
+  $("#chipB").textContent=cat.name;$("#chipB").style.background=cat.color;
+  $("#lvlF").innerHTML=lvlHtml(level);
+  $("#lvlB").innerHTML=lvlHtml(level);
+  $("#qtext").textContent=cd.q;
+
+  const at=$("#atext");
+  at.innerHTML="";
+  cd.a.split("\n").forEach(line=>{
+    if(line.startsWith("#")){const b=document.createElement("span");b.className="big";b.textContent=line.slice(1);at.appendChild(b);}
+    else{const d=document.createElement("div");d.textContent=line;at.appendChild(d);}
+  });
+
+  const front=$("#frontFace");
+  if(level<3){
+    front.classList.add("mc");
+    $("#hintF").textContent="pick one";
+    $("#answers").style.visibility="hidden";
+    renderOptions(cd,level===1?3:4);
+    $("#opts").style.display="flex";
+  }else{
+    front.classList.remove("mc");
+    $("#hintF").textContent="tap to flip";
+    $("#opts").style.display="none";
+    $("#answers").style.visibility="hidden";
+  }
+  $("#barfill").style.width=(idx/total*100)+"%";
+  $("#count").textContent=`${Math.min(idx+1,total)} / ${total}`;
+}
+function renderOptions(cd,nOpts){
+  const pool=CARDS.filter(x=>x.c===cd.c&&x.sid!==cd.sid&&x.short!==cd.short);
+  const seen=new Set([cd.short]);
+  const distractors=[];
+  const shuffled=[...pool];
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  for(const x of shuffled){
+    if(distractors.length>=nOpts-1)break;
+    if(seen.has(x.short))continue;
+    seen.add(x.short);distractors.push(x.short);
+  }
+  const opts=[{t:cd.short,right:true},...distractors.map(t=>({t,right:false}))];
+  for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
+  const box=$("#opts");
+  box.innerHTML="";
+  opts.forEach(o=>{
+    const b=document.createElement("button");
+    b.className="opt";b.textContent=o.t;
+    b.onclick=()=>pickOption(b,o.right);
+    box.appendChild(b);
+  });
+}
+function pickOption(btn,right){
+  if(locked)return;locked=true;
+  const {cd}=queue[idx];
+  document.querySelectorAll(".opt").forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===cd.short)b.classList.add("right");
+  });
+  if(!right)btn.classList.add("wrong");
+  setTimeout(()=>answer(right),right?550:1500);
+}
+$("#card").onclick=()=>{
+  if(!queue[idx])return;
+  const s=stat(queue[idx].cd);
+  if(s.level<3)return;
+  flipped=!flipped;
+  $("#card").classList.toggle("flipped",flipped);
+  $("#answers").style.visibility=flipped?"visible":"hidden";
+};
+$("#gotit").onclick=()=>answer(true);
+$("#missed").onclick=()=>answer(false);
+
+function toast(msg){
+  const t=$("#toast");
+  t.textContent=msg;t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1300);
+}
+function answer(right){
+  const item=queue[idx];
+  const cd=item.cd;
+  const s=stat(cd);
+  s.seen++;
+  if(right){
+    s.right++;s.streak++;rightThis++;
+    if(s.streak>=2&&s.level<3){
+      s.level++;s.streak=0;
+      toast(s.level===3?"Level up — full recall":"Level up — harder choices");
+    }else if(s.level===3&&s.streak===2){
+      toast("Mastered");
+    }
+  }else{
+    s.streak=0;
+    if(!missedThis.includes(cd))missedThis.push(cd);
+    if(!item.recycled){queue.push({cd,recycled:true});total++;}
+  }
+  idx++;
+  saveState();
+  showCard();
+}
+$("#quit").onclick=()=>renderHome();
+
+/* ================= DONE ================= */
+function endSession(){
+  sessionsDone++;saveState();
+  $("#session").style.display="none";
+  $("#done").style.display="flex";
+  const pct=total?Math.round(rightThis/total*100):0;
+  $("#scoreTxt").textContent=pct+"%";
+  $("#scoreTxt").style.color = pct>=80?"var(--green)":pct>=60?"var(--amber)":"var(--red)";
+  const u=missedThis.length;
+  $("#doneTitle").textContent = pct>=80?"Set complete — strong":"Set complete";
+  $("#doneMsg").textContent = u
+    ? `${u} card${u>1?"s":""} missed this set — streaks reset, so they'll keep showing up until you climb them back to Recall.`
+    : "Clean set. Every card here climbed toward mastery.";
+  $("#drill").style.display=u?"block":"none";
+}
+$("#again").onclick=()=>startSession(lastDeck);
+$("#backhome").onclick=()=>renderHome();
+$("#drill").onclick=()=>{
+  queue=missedThis.map(cd=>({cd,recycled:false}));
+  idx=0;total=queue.length;missedThis=[];rightThis=0;
+  $("#done").style.display="none";$("#session").style.display="flex";
+  showCard();
+};
+
+/* ================= GITHUB LINK ================= */
+function linkStatus(msg){const el=$("#linkmsg");if(el)el.textContent=msg;}
+$("#linkbtn").onclick=async()=>{
+  const t=$("#tok").value.trim();
+  if(!t){linkStatus("Paste the token first.");return;}
+  token=t;
+  try{localStorage.setItem(TOKKEY,token);}catch(e){}
+  $("#tok").value="";
+  linkStatus("Linking…");
+  await loadState();
+  if(document.querySelector("#sync").className!=="ok"){
+    token="";try{localStorage.removeItem(TOKKEY);}catch(e){}
+    setSync("unlinked");
+    renderHome();
+    linkStatus("GitHub rejected that token or there's no connection. Check it has Gists read & write and try again.");
+  }
+};
+$("#unlinkbtn").onclick=()=>{
+  if(!confirm("Unlink GitHub on this device? Progress stays in your Gist and on this device."))return;
+  token="";gistId="";
+  try{localStorage.removeItem(TOKKEY);localStorage.removeItem(GIDKEY);}catch(e){}
+  setSync("unlinked");renderHome();
+};
+
+loadState();
+</script>
+</body>
+</html>
